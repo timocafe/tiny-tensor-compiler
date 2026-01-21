@@ -66,14 +66,14 @@ int main(int argc, char *argv[]) {
         matrix<float> B(size, size, 0);
 
         const std::string code = R"TinyTL(
-func @tilling(%A: memref<f32x64x64,strided<1,64>> {alignment=128,shape_gcd=[4,4],stride_gcd=[1,16]},
-              %B: memref<f32x64x64,strided<1,64>> {alignment=128,shape_gcd=[4,4],stride_gcd=[1,16]})
+func @tilling(%A: memref<f32x?x?,strided<1,?>> {alignment=128,shape_gcd=[4,4],stride_gcd=[1,16]},
+              %B: memref<f32x?x?,strided<1,?>> {alignment=128,shape_gcd=[4,4],stride_gcd=[1,16]})        
      attributes{subgroup_size=16,work_group_size=[16,16]} {
     ; alias
     $mat_t = coopmatrix<f32x16x16,matrix_acc>
     %c0 = constant 0 : index
-    %m1 = constant 1.0 : $mat_t
-    %c16 = constant 16 : index
+    %m1 = constant 1.0 : $mat_t 
+    %c16 = constant 16 : index 
 
 
     parallel {
@@ -83,7 +83,6 @@ func @tilling(%A: memref<f32x64x64,strided<1,64>> {alignment=128,shape_gcd=[4,4]
     cooperative_matrix_store %tile_final, %B[%c0,%c0]
     }
 })TinyTL";
-
 
         // JIT compile program
         auto q = sycl::queue{};

@@ -2,7 +2,7 @@ include(CommonOptions)
 
 find_package(SYCL REQUIRED)
 
-set(examples main main2 main3 main4)
+set(examples main main2 main3 main4 main5)
 
 foreach(example IN LISTS examples)
     add_executable(${example} ${example}.cpp)
