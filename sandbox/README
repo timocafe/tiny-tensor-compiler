@@ -1,0 +1,56 @@
+# Sandbox Directory
+
+This directory contains example programs demonstrating various features of the tiny-tensor-compiler.
+
+## Structure
+
+- `main.cpp` - Unified entry point for all examples
+- `examples.cpp/hpp` - Implementation of example functions
+- `matrix.hpp` - Shared matrix template class
+- `common.hpp` - Common utilities (error handling, compiler setup)
+- `main1-5.cpp` - Original individual example files (for reference)
+
+## Building
+
+From the build directory:
+```bash
+cmake .. && make sandbox
+```
+
+## Running Examples
+
+Run all examples:
+```bash
+./sandbox
+# or
+./sandbox all
+```
+
+Run a specific example:
+```bash
+./sandbox 1  # Store Block2D
+./sandbox 2  # Add Block2D
+./sandbox 3  # Tiling with Remainder
+./sandbox 4  # Subview Operations
+./sandbox 5  # Dynamic Memref
+```
+
+Show help:
+```bash
+./sandbox --help
+```
+
+## Examples Description
+
+1. **Store Block2D**: Demonstrates cooperative matrix store operations
+2. **Add Block2D**: Shows cooperative matrix operations with apply and native_exp
+3. **Tiling with Remainder**: Illustrates tiling with remainder checking using foreach_tile
+4. **Subview Operations**: Demonstrates subview functionality with fixed-size memrefs
+5. **Dynamic Memref**: Shows dynamic memref with dope vectors for runtime shape information
+
+## Building Individual Examples (Optional)
+
+If you need to build the original individual executables:
+```bash
+cmake -DBUILD_INDIVIDUAL_EXAMPLES=ON .. && make
+```
