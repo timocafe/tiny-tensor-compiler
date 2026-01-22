@@ -47,10 +47,3 @@ Show help:
 3. **Tiling with Remainder**: Illustrates tiling with remainder checking using foreach_tile
 4. **Subview Operations**: Demonstrates subview functionality with fixed-size memrefs
 5. **Dynamic Memref**: Shows dynamic memref with dope vectors for runtime shape information
-
-## Building Individual Examples (Optional)
-
-If you need to build the original individual executables:
-```bash
-cmake -DBUILD_INDIVIDUAL_EXAMPLES=ON .. && make
-```
