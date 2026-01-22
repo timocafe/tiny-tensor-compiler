@@ -15,6 +15,8 @@ void print_usage(const char* program_name) {
     std::cout << "  3 - Tiling with Remainder: Shows tiling with remainder checking\n";
     std::cout << "  4 - Subview Operations: Demonstrates subview functionality\n";
     std::cout << "  5 - Dynamic Memref: Shows dynamic memref with dope vectors\n";
+    std::cout << "  6 - Dynamic Memref with Tiling: Shows dynamic memref with tiling\n";
+    std::cout << "  7 - Manual Tiling with Workgroup Management\n";
     std::cout << "  all - Run all examples sequentially\n\n";
     std::cout << "If no argument is provided, runs all examples.\n";
 }
@@ -28,7 +30,10 @@ int main(int argc, char *argv[]) {
         {2, example2_add_block2d},
         {3, example3_tiling_remainder},
         {4, example4_subview},
-        {5, example5_dynamic_memref}
+        {5, example5_dynamic_memref},
+        {6, example6_dynamic_memref_tiling },
+        {7, example7_tiling_manual_workgroup}
+
     };
 
     // If no arguments or "all", run all examples

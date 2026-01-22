@@ -6,12 +6,12 @@ extern const sycl::queue q;
 
 void example1_store_block2d() {
     std::cout << "\n=== Example 1: Store Block2D ===\n";
-    
+
     auto ctx = create_configured_context();
     execute_with_error_handling([&]() {
         // Initialize tensors
         matrix<float> A(32, 32);
-        
+
         const std::string code = R"TinyTL(
 func @store_block2d(%A: memref<f32x32x32> {alignment=128})
     attributes{subgroup_size=16,work_group_size=[16,1]} {
@@ -29,7 +29,7 @@ func @store_block2d(%A: memref<f32x32x32> {alignment=128})
         auto program = tinytc::parse_string(code, ctx.get());
         auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
         auto kernel = tinytc::create_kernel(bundle, "store_block2d");
-        
+
         auto exe_range = tinytc::get_execution_range(kernel, sycl::range<3u>{1, 1, 1});
         q.submit([&](sycl::handler &h) {
              h.set_args(A.data());
@@ -42,7 +42,7 @@ func @store_block2d(%A: memref<f32x32x32> {alignment=128})
 
 void example2_add_block2d() {
     std::cout << "\n=== Example 2: Add Block2D ===\n";
-    
+
     auto ctx = create_configured_context();
     auto toto = const_tinytc_core_info_t();
 
@@ -51,7 +51,7 @@ void example2_add_block2d() {
         matrix<float> A(32, 32, 1);
         matrix<float> B(32, 32, 2);
         matrix<float> C(32, 32, 0);
-        
+
         const std::string code = R"TinyTL(
 func @add_block2d(%A: memref<f32x32x32> {alignment=128},
                   %B: memref<f32x32x32> {alignment=128},        
@@ -78,10 +78,10 @@ func @add_block2d(%A: memref<f32x32x32> {alignment=128},
         auto program = tinytc::parse_string(code, ctx.get());
         auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
         auto kernel = tinytc::create_kernel(bundle, "add_block2d");
-        
+
         auto exe_range = tinytc::get_execution_range(kernel, sycl::range<3u>{1, 1, 1});
         q.submit([&](sycl::handler &h) {
-             h.set_args(A.data(),B.data(),C.data());
+             h.set_args(A.data(), B.data(), C.data());
              h.parallel_for(exe_range, kernel);
          }).wait();
 
@@ -91,7 +91,7 @@ func @add_block2d(%A: memref<f32x32x32> {alignment=128},
 
 void example3_tiling_remainder() {
     std::cout << "\n=== Example 3: Tiling with Remainder ===\n";
-    
+
     auto ctx = create_configured_context();
     auto toto = const_tinytc_core_info_t();
 
@@ -161,12 +161,13 @@ func @tilling(%A: memref<f32x36x32> {alignment=128},
         auto program = tinytc::parse_string(code, ctx.get());
         auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
         auto kernel = tinytc::create_kernel(bundle, "tilling");
-        
-        const auto global_range = sycl::range<3u>{1,3,3};
+
+        const auto global_range = sycl::range<3u>{1, 3, 3};
 
         q.submit([&](sycl::handler &h) {
-             h.set_args(A.data(),B.data());
-             h.parallel_for(tinytc::get_global_size(global_range, sycl::range<3u>(1,16,16)), kernel);
+             h.set_args(A.data(), B.data());
+             h.parallel_for(tinytc::get_global_size(global_range, sycl::range<3u>(1, 16, 16)),
+                            kernel);
          }).wait();
 
         std::cout << A << std::endl;
@@ -176,7 +177,7 @@ func @tilling(%A: memref<f32x36x32> {alignment=128},
 
 void example4_subview() {
     std::cout << "\n=== Example 4: Subview Operations ===\n";
-    
+
     auto ctx = create_configured_context();
     auto toto = const_tinytc_core_info_t();
 
@@ -210,16 +211,17 @@ func @tilling(%A: memref<f32x64x64,strided<1,64>> {alignment=128,shape_gcd=[4,4]
         auto program = tinytc::parse_string(code, ctx.get());
         auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
         auto kernel = tinytc::create_kernel(bundle, "tilling");
-        
+
         const int64_t tile_size = 16;
-        const std::size_t gr_size = 1 + (A.rows() - 1) / tile_size; 
+        const std::size_t gr_size = 1 + (A.rows() - 1) / tile_size;
         const auto global_range = sycl::range<3u>{1, 1, 1};
 
         std::cout << "gr_size: " << gr_size << std::endl;
 
         q.submit([&](sycl::handler &h) {
-             h.set_args(A.data(),B.data());
-             h.parallel_for(tinytc::get_global_size(global_range, sycl::range<3u>(1,16,16)), kernel);
+             h.set_args(A.data(), B.data());
+             h.parallel_for(tinytc::get_global_size(global_range, sycl::range<3u>(1, 16, 16)),
+                            kernel);
          }).wait();
 
         std::cout << B << std::endl;
@@ -228,7 +230,7 @@ func @tilling(%A: memref<f32x64x64,strided<1,64>> {alignment=128,shape_gcd=[4,4]
 
 void example5_dynamic_memref() {
     std::cout << "\n=== Example 5: Dynamic Memref with Dope Vectors ===\n";
-    
+
     auto ctx = create_configured_context();
     auto toto = const_tinytc_core_info_t();
 
@@ -263,13 +265,13 @@ func @tilling(%A: memref<f32x?x?,strided<1,?>> {alignment=128,shape_gcd=[4,4],st
         auto program = tinytc::parse_string(code, ctx.get());
         auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
         auto kernel = tinytc::create_kernel(bundle, "tilling");
-        
+
         const int64_t tile_size = 16;
-        const std::size_t gr_size = 1 + (A.rows() - 1) / tile_size; 
+        const std::size_t gr_size = 1 + (A.rows() - 1) / tile_size;
         const auto global_range = sycl::range<3u>{1, 1, 1};
 
         std::cout << "gr_size: " << gr_size << std::endl;
-        
+
         // When using dynamic memref (memref<f32x?x?>) instead of static sizes,
         // we need to pass extra information so the kernel knows the matrix dimensions.
         // This is called a "dope vector" - it's just the size and layout info.
@@ -293,11 +295,148 @@ func @tilling(%A: memref<f32x?x?,strided<1,?>> {alignment=128,shape_gcd=[4,4],st
         std::int64_t B_stride1 = B_shape1;
 
         q.submit([&](sycl::handler &h) {
-             h.set_args(A.data(), A_shape0, A_shape1, A_stride1, B.data(), B_shape0, B_shape1, B_stride1);
-             h.parallel_for(tinytc::get_global_size(global_range, sycl::range<3u>(1,16,16)), kernel);
+             h.set_args(A.data(), A_shape0, A_shape1, A_stride1, B.data(), B_shape0, B_shape1,
+                        B_stride1);
+             h.parallel_for(tinytc::get_global_size(global_range, sycl::range<3u>(1, 16, 16)),
+                            kernel);
          }).wait();
 
         std::cout << B << std::endl;
+    });
+}
+
+void example6_dynamic_memref_tiling() {
+    std::cout << "\n=== Example 6: Dynamic Memref with Tiling ===\n";
+
+    auto ctx = create_configured_context();
+    auto toto = const_tinytc_core_info_t();
+
+    execute_with_error_handling([&]() {
+        // original size
+        const int64_t size = 32;
+        // Initialize tensors
+        matrix<float> A(size, size, 1);
+        matrix<float> B(size, size, 0);
+
+        const std::string code = R"TinyTL(
+func @tilling(%A: memref<f32x?x?,strided<1,?>> {alignment=128,shape_gcd=[4,4],stride_gcd=[1,16]},
+              %B: memref<f32x?x?,strided<1,?>> {alignment=128,shape_gcd=[4,4],stride_gcd=[1,16]})        
+     attributes{subgroup_size=16,work_group_size=[16,16]} {
+    ; alias
+    $mat_t = coopmatrix<f32x16x16,matrix_acc>
+    %c0 = constant 0 : index
+    %c16 = constant 16 : index
+    %A_rows = size %A[0] : index
+    %A_cols = size %A[1] : index
+    %m2 = constant 2.0 : $mat_t 
+
+    foreach_tile (%i,%j)=(%c0,%c0),(%A_rows,%A_cols) as (%ti,%tj)<=(16,16) {
+        ; ti and tj are the actual tile sizes (handle remainders)
+        %svA = subview %A[%i:%ti,%j:%tj] : memref<f32x?x?,strided<1,?>>
+        %svB = subview %B[%i:%ti,%j:%tj] : memref<f32x?x?,strided<1,?>>
+        %tile = cooperative_matrix_load %svA[%c0,%c0] : $mat_t
+        %tile_final = add %tile, %m2 : $mat_t
+        cooperative_matrix_store %tile_final, %svB[%c0,%c0]
+    }
+
+})TinyTL";
+
+        // JIT compile program
+        auto q = sycl::queue{};
+        auto program = tinytc::parse_string(code, ctx.get());
+        auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
+        auto kernel = tinytc::create_kernel(bundle, "tilling");
+
+        const int64_t tile_size = 16;
+        const std::size_t gr_size = 1 + (A.rows() - 1) / tile_size;
+        const auto global_range = sycl::range<3u>{1, gr_size, gr_size};
+
+        std::int64_t A_shape0 = size;
+        std::int64_t A_shape1 = size;
+        std::int64_t A_stride1 = A_shape0;
+
+        std::int64_t B_shape0 = size;
+        std::int64_t B_shape1 = size;
+        std::int64_t B_stride1 = B_shape1;
+
+        q.submit([&](sycl::handler &h) {
+             h.set_args(A.data(), A_shape0, A_shape1, A_stride1, B.data(), B_shape0, B_shape1,
+                        B_stride1);
+             h.parallel_for(tinytc::get_global_size(global_range, sycl::range<3u>(1, 16, 16)),
+                            kernel);
+         }).wait();
+
+        std::cout << B << std::endl;
+    });
+}
+
+void example7_tiling_manual_workgroup() {
+    std::cout << "\n=== Example 7: manual tilling using workgroup ===\n";
+
+    auto ctx = create_configured_context();
+    auto toto = const_tinytc_core_info_t();
+
+    execute_with_error_handling([&]() {
+        // original size
+        const int64_t size = 32;
+        // Initialize tensors
+        matrix<float> A(size, size, 1);
+        matrix<float> B(size, size, 0);
+
+        // Fill quarters: top-left=0, top-right=1, bottom-left=2, bottom-right=3
+        for(int i=0; i<size; i++) {
+            for(int j=0; j<size; j++) {
+            int quarter = (i >= size/2 ? 2 : 0) + (j >= size/2 ? 1 : 0);
+            B(i,j) = quarter;
+            }
+        }
+
+        std::cout << "Matrix B before:\n" << B << std::endl;
+
+        std::array<float, 4> W = {1.0, 2.0, 3.0, 4.0};
+
+        const std::string code = R"TinyTL(
+func @foo(%A: memref<f32x32x32> {alignment=128},
+          %B: memref<f32x32x32> {alignment=128})        
+    attributes{subgroup_size=16,work_group_size=[16,16]} {
+    ; alias
+    $mat_t = coopmatrix<f32x16x16,matrix_acc>
+    ; the mystery ....
+    %gz = group_id.z : index
+    ;gy 0 or 1 
+    %gy = group_id.y : index
+    ;gx 0 or 1
+    %gx = group_id.x : index
+
+    %c16 = constant 16 : index
+    ; beginning of the workgroup 9 or 16
+    %gx_begin = mul %gx, %c16 : index
+    %gy_begin = mul %gy, %c16 : index
+
+    parallel {
+        %1 = cooperative_matrix_load %A[%gx_begin,%gy_begin] : $mat_t
+        %2 = cooperative_matrix_load %B[%gx_begin,%gy_begin] : $mat_t
+        %3 = add %1, %2 : $mat_t
+        cooperative_matrix_store %3, %B[%gx_begin,%gy_begin]
+    }
+
+})TinyTL";
+
+        // JIT compile program
+        auto q = sycl::queue{};
+        auto program = tinytc::parse_string(code, ctx.get());
+        auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
+        auto kernel = tinytc::create_kernel(bundle, "foo");
+
+        q.submit([&](sycl::handler &h) {
+             h.set_args(A.data(), B.data());
+             // from Carsten it z,y,x order
+             // https://intel.github.io/tiny-tensor-compiler/api/sycl/cxxapi.html#tinytc-get-global-size-sycl-range-3u-const-sycl-range-3u-const
+             h.parallel_for(tinytc::get_global_size(sycl::range<3u>{1, 2, 2}, sycl::range<3u>(1, 16, 16)),
+                            kernel);
+         }).wait();
+
+        std::cout << "Matrix B after :\n" << B << std::endl;
     });
 }
 

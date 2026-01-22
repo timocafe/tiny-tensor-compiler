@@ -20,4 +20,11 @@ void example4_subview();
 // Example 5: Dynamic memref with dope vectors
 void example5_dynamic_memref();
 
+// Example 6: Dynamic memref with Tiling 
+void example6_dynamic_memref_tiling();
+
+// Example 7: tilling with hand made management of the workgroup
+void example7_tiling_manual_workgroup();
+
+
 } // namespace sandbox
