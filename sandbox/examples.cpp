@@ -13,7 +13,7 @@ void example1_store_block2d() {
         matrix<float> A(32, 32);
 
         const std::string code = R"TinyTL(
-func @store_block2d(%A: memref<f32x32x32> {alignment=128})
+func @scale(%A: memref<f32x32x32> {alignment=128})
     attributes{subgroup_size=16,work_group_size=[16,1]} {
     parallel {
         %0 = constant 42.0 : coopmatrix<f32x8x8,matrix_acc>
@@ -28,7 +28,7 @@ func @store_block2d(%A: memref<f32x32x32> {alignment=128})
         auto q = sycl::queue{};
         auto program = tinytc::parse_string(code, ctx.get());
         auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
-        auto kernel = tinytc::create_kernel(bundle, "store_block2d");
+        auto kernel = tinytc::create_kernel(bundle, "scale");
 
         auto exe_range = tinytc::get_execution_range(kernel, sycl::range<3u>{1, 1, 1});
         q.submit([&](sycl::handler &h) {
@@ -384,10 +384,10 @@ void example7_tiling_manual_workgroup() {
         matrix<float> B(size, size, 0);
 
         // Fill quarters: top-left=0, top-right=1, bottom-left=2, bottom-right=3
-        for(int i=0; i<size; i++) {
-            for(int j=0; j<size; j++) {
-            int quarter = (i >= size/2 ? 2 : 0) + (j >= size/2 ? 1 : 0);
-            B(i,j) = quarter;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                int quarter = (i >= size / 2 ? 2 : 0) + (j >= size / 2 ? 1 : 0);
+                B(i, j) = quarter;
             }
         }
 
@@ -401,12 +401,10 @@ func @foo(%A: memref<f32x32x32> {alignment=128},
     attributes{subgroup_size=16,work_group_size=[16,16]} {
     ; alias
     $mat_t = coopmatrix<f32x16x16,matrix_acc>
-    ; the mystery ....
-    %gz = group_id.z : index
-    ;gy 0 or 1 
-    %gy = group_id.y : index
     ;gx 0 or 1
     %gx = group_id.x : index
+    ;gy 0 or 1 
+    %gy = group_id.y : index
 
     %c16 = constant 16 : index
     ; beginning of the workgroup 9 or 16
@@ -432,11 +430,51 @@ func @foo(%A: memref<f32x32x32> {alignment=128},
              h.set_args(A.data(), B.data());
              // from Carsten it z,y,x order
              // https://intel.github.io/tiny-tensor-compiler/api/sycl/cxxapi.html#tinytc-get-global-size-sycl-range-3u-const-sycl-range-3u-const
-             h.parallel_for(tinytc::get_global_size(sycl::range<3u>{1, 2, 2}, sycl::range<3u>(1, 16, 16)),
-                            kernel);
+             h.parallel_for(
+                 tinytc::get_global_size(sycl::range<3u>{1, 2, 2}, sycl::range<3u>(1, 16, 16)),
+                 kernel);
          }).wait();
 
         std::cout << "Matrix B after :\n" << B << std::endl;
+    });
+}
+
+void example8_scale_matrix() {
+    std::cout << "\n=== Example 8: Scale a Matrix ===\n";
+
+    auto ctx = create_configured_context();
+    auto toto = const_tinytc_core_info_t();
+
+    execute_with_error_handling([&]() {
+        // Initialize tensors
+        matrix<float> A(32, 32, 1);
+
+        const std::string code = R"TinyTL(
+func @store_block2d(%A: memref<f32x32x32> {alignment=128})
+    attributes{subgroup_size=16,work_group_size=[16,1]} {
+    parallel {
+        %0 = constant 0 : index
+        %1 = constant 1.0 : coopmatrix<f32x32x32,matrix_acc>
+        %2 = constant 2.0 : f32
+        ; the order maters first the scalar then the matrix
+        %3 = cooperative_matrix_scale %2, %1 : coopmatrix<f32x32x32,matrix_acc>
+        cooperative_matrix_store %3, %A[%0,%0]
+    }
+})TinyTL";
+
+        // JIT compile program
+        auto q = sycl::queue{};
+        auto program = tinytc::parse_string(code, ctx.get());
+        auto bundle = tinytc::create_kernel_bundle(q.get_context(), q.get_device(), program.get());
+        auto kernel = tinytc::create_kernel(bundle, "store_block2d");
+
+        auto exe_range = tinytc::get_execution_range(kernel, sycl::range<3u>{1, 1, 1});
+        q.submit([&](sycl::handler &h) {
+             h.set_args(A.data());
+             h.parallel_for(exe_range, kernel);
+         }).wait();
+
+        std::cout << A << std::endl;
     });
 }
 

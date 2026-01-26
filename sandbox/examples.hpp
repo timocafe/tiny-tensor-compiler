@@ -26,5 +26,8 @@ void example6_dynamic_memref_tiling();
 // Example 7: tilling with hand made management of the workgroup
 void example7_tiling_manual_workgroup();
 
+// Example 8: Scale a matrix
+void example8_scale_matrix();
+
 
 } // namespace sandbox
